@@ -4,6 +4,9 @@
 import { useState,useEffect,useRef } from "react";
 import API from '../API';
 
+//helpers
+import { isPersistedState } from "../helpers";
+
 const initialState={page:0,results:[],total_pages:0, total_results:0};
 
 export function useHomeFetch(){
@@ -34,8 +37,15 @@ export function useHomeFetch(){
 
     //Initial and Search Render
     useEffect(()=> {
+        if (!searchTerm) {
+            const sessionState = isPersistedState('homeState');
+            if (sessionState) {
+                setSate(sessionState);
+                return;
+            }
+        }
         setSate(initialState);
-        fetchMovies(1,searchTerm);
+        fetchMovies(1, searchTerm);
     },[searchTerm]); //Wird getriggert beim initialisieren und beim ändern des wertes searchterm
 
     //LoadMore
@@ -44,6 +54,15 @@ export function useHomeFetch(){
         fetchMovies(state.page+1,searchTerm);
         setIsLoadingMore(false);
     },[isLoadingMore,searchTerm,state.page])
+
+//Write to sessionstorage
+useEffect(()=>{
+if(!searchTerm){
+sessionStorage.setItem('homeState',JSON.stringify(state));
+}
+
+},[searchTerm,state])
+
 
     return{state,loading,error,searchTerm, setSearchTerm,setIsLoadingMore};
 }
